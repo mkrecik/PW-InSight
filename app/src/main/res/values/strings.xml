@@ -2,4 +2,5 @@
     <string name="app_name">PW InSight</string>
     <string name="scan_beacons">Skanuj beacony</string>
     <string name="ok">OK</string>
+    <string name="tts">TTS</string>
 </resources>

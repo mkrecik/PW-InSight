@@ -50,8 +50,6 @@
         android:layout_gravity="bottom|center"
         android:textSize="15sp"
         android:layout_marginBottom="100dp"
-        android:enabled="false"
-    />
-
+        android:enabled="false"/>
 
 </FrameLayout>

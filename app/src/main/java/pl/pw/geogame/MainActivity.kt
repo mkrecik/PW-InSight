@@ -38,17 +38,23 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import pl.pw.geogame.data.model.loadBeaconsFromAssets
 import pl.pw.geogame.data.model.pois
+import android.speech.tts.TextToSpeech
+import java.util.*
 
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
     companion object {
         private const val TAG = "pw.MainActivity"
     }
+
     private var MIN_DISTANCE_TO_POI = 10.0
 
+    private var tts: TextToSpeech? = null
 
     private var canScan = false
     private var popupVisible = false
+
+    private val poiDisplayTimestamps = mutableMapOf<String, Long>()
+    private val popupTimeoutMs = 30_000L
 
     private lateinit var connectionStateReceiver: ConnectionStateChangeReceiver
     private var beaconManager: BeaconManager? = null
@@ -80,6 +86,9 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate")
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        tts = TextToSpeech(this, this)
+
         loadReferenceBeaconData()
         setUpUI()
         setUpBeaconManager()
@@ -204,7 +213,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (beacons.size < 3) {
                     Log.d(TAG, "Nie ma wystarczająco beaconów na trilaterację (${beacons.size})")
-                    simulateBeaconScan()
+//                    simulateBeaconScan()
                 }
                 else {
                     calculateDevicePosition(beacons)
@@ -364,7 +373,6 @@ class MainActivity : AppCompatActivity() {
                 position = GeoPoint(obj.latitude, obj.longitude)
                 icon = BitmapDrawable(resources, bitmap)
                 title = obj.name
-//                snippet = obj.description
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             }
             map.overlays.add(marker)
@@ -389,6 +397,12 @@ class MainActivity : AppCompatActivity() {
             onClose()
         }
 
+        speak(title, description)
+
+        view.findViewById<Button>(R.id.dialog_repeat).setOnClickListener {
+            speak(title, description)
+        }
+
         dialog.show()
         dialog.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.9).toInt(),
@@ -403,6 +417,8 @@ class MainActivity : AppCompatActivity() {
             longitude = userLon
         }
 
+        val now = System.currentTimeMillis()
+
         pois.forEach { obj ->
             val objLocation = android.location.Location("").apply {
                 latitude = obj.latitude
@@ -410,6 +426,9 @@ class MainActivity : AppCompatActivity() {
             }
 
             val distance = userLocation.distanceTo(objLocation)
+
+            val lastShown = poiDisplayTimestamps[obj.name] ?: 0
+            if (now - lastShown < popupTimeoutMs) return@forEach
 
             if (distance <= MIN_DISTANCE_TO_POI) {
                 popupVisible = true
@@ -425,9 +444,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun speak(title: String, description: String) {
+        tts?.stop()
+
+        tts?.speak(title, TextToSpeech.QUEUE_FLUSH, null, "TTS_TITLE")
+        tts?.playSilentUtterance(500L, TextToSpeech.QUEUE_ADD, "TTS_PAUSE")
+        tts?.speak(description, TextToSpeech.QUEUE_ADD, null, "TTS_DESC")    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts?.setLanguage(Locale("pl", "PL"))
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("TTS", "Language not supported")
+            }
+        } else {
+            Log.e("TTS", "Initialization failed")
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart")
+
     }
 
     override fun onResume() {
@@ -447,8 +485,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(connectionStateReceiver)
         Log.d(TAG, "onDestroy")
+
+        unregisterReceiver(connectionStateReceiver)
+        tts?.stop()
+        tts?.shutdown()
+
 
     }
 

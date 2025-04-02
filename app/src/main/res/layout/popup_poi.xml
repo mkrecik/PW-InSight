@@ -30,15 +30,31 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/dialog_ok"
-            android:layout_marginTop="24dp"
-            android:text="@string/ok"
-            android:textColor="@color/colorSecondary"
-            android:fontFamily="serif"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right" />
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal"
+            android:layout_gravity="bottom">
+
+            <Button
+                android:id="@+id/dialog_repeat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tts"
+                android:textColor="@color/colorSecondary"
+                android:fontFamily="serif"
+                android:layout_marginEnd="120dp"/>
+
+            <Button
+                android:id="@+id/dialog_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/ok"
+                android:textColor="@color/colorSecondary"
+                android:fontFamily="serif"/>
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>
