@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
         private const val TAG = "pw.MainActivity"
     }
 
-    private var MIN_DISTANCE_TO_POI = 10.0
+    private var MIN_DISTANCE_TO_POI = 5.0
 
     private var tts: TextToSpeech? = null
 
@@ -179,15 +179,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
         scanBeacons()
     }
 
-//    private fun startRangingBeacons(){
-//        if (beaconManager == null) {
-//            setUpBeaconManager()
-//        }
-//        else {
-//            scanBeacons()
-//        }
-//    }
-
     private fun setUpBeaconManager() {
         if (beaconManager == null) {
             beaconManager = BeaconManager.getInstanceForApplication(this)
@@ -200,12 +191,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
                 beaconManager?.beaconParsers?.add(BeaconParser().setBeaconLayout(it))
             }
 
-            // Scan config
             beaconManager?.foregroundScanPeriod = 1100L
             beaconManager?.foregroundBetweenScanPeriod = 1000L
             beaconManager?.updateScanPeriods()
 
-            // Logger
             beaconManager?.addRangeNotifier { beacons, _ ->
                 Log.d(TAG, "Znaleziono ${beacons.size} beaconów")
                 beacons.forEach {
@@ -213,7 +202,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
                 }
                 if (beacons.size < 3) {
                     Log.d(TAG, "Nie ma wystarczająco beaconów na trilaterację (${beacons.size})")
-//                    simulateBeaconScan()
+                    // do celów testowych symulujemy skanowanie beaconów
+                    // simulateBeaconScan()
                 }
                 else {
                     calculateDevicePosition(beacons)
@@ -277,6 +267,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
         val lon = matched.zip(weights).sumOf { it.first.second * it.second } / weightSum
 
         Log.d(TAG, "Lokalizacja użytkownika: ($lat, $lon)")
+        Toast.makeText(this, "($lat, $lon)", Toast.LENGTH_SHORT).show()
 
         showUserOnMap(lat, lon)
         checkProximityToPOI(lat, lon)
@@ -390,7 +381,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
         dialog.setContentView(view)
         dialog.setCancelable(false)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window?.attributes?.windowAnimations = R.style.DialogAnimation // dodaj to!
+        dialog.window?.attributes?.windowAnimations = R.style.DialogAnimation
 
         view.findViewById<Button>(R.id.dialog_ok).setOnClickListener {
             dialog.dismiss()
@@ -455,10 +446,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener  {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts?.setLanguage(Locale("pl", "PL"))
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("TTS", "Language not supported")
+                Log.e("TTS", "Nie znaleziono języka")
             }
         } else {
-            Log.e("TTS", "Initialization failed")
+            Log.e("TTS", "Inicjalizacja nie powiodła się")
         }
     }
 
